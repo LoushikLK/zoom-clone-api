@@ -51,10 +51,10 @@ const userSchema = new Schema<UserType>(
 );
 
 userSchema
-  .virtual("password")
-  .set(function (password) {
+  .virtual("rawPassword")
+  .set(function (rawPassword) {
     this.salt = uuidv4();
-    this.password = this.encryptPassword(password);
+    this.password = this.encryptPassword(rawPassword);
   })
   .get(function () {
     return this.password;

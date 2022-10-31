@@ -1,3 +1,4 @@
+import cookiesParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
 import uploader from "express-fileupload";
@@ -20,6 +21,7 @@ class App {
 
   private middleware(): void {
     this.express.use(cors());
+    this.express.use(cookiesParser());
     this.express.use(express.json());
     this.express.use(
       uploader({
