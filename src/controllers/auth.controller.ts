@@ -31,12 +31,14 @@ class Auth {
       } = req.body;
 
       const avatarFile = req.files?.photo;
-      const filePath = `${req.currentUser?._id}`;
+      const filePath = `users`;
 
-      const avatarData: any | undefined =
+      const avatarData =
         avatarFile && !Array.isArray(avatarFile)
           ? await new MediaLogic().uploadMedia(avatarFile, filePath)
           : undefined;
+
+      const mailOTP = createOTP(6);
 
       // save user data to database
       const newUser: UserType = await new UserModel({
@@ -50,7 +52,44 @@ class Auth {
         createdBy: req?.currentUser?._id,
         countryCode,
         gender,
+        verificationInfo: {
+          OTP: mailOTP,
+          OTPExpiry: new Date(Date.now() + 1000 * 60 * 30),
+        },
       }).save();
+
+      await new MailController().sendHtmlMail({
+        to: email,
+        subject: "VChat | Verify your email",
+        templet: "normal",
+        html: `<h1>Verify Your Email</h1>
+        <p>
+          Verify your email with vChat by adding following code in your verify page.
+          </p>
+          <p>
+          
+          </p>
+          if you did not create this account please ignore.
+          </p>
+
+          <h1>
+
+          ${mailOTP}
+          
+          </h1>
+
+          <a href="${process.env.WEBSITE_END_POINT}/verify-email?email=${email}">
+            Verify Email
+            </a>
+
+            <p>
+            Thanks, <br>
+            ${process.env.WEBSITE_NAME}
+
+
+            </p>
+          </p>`,
+      });
 
       // send response to client
       res.status(200).json({
@@ -96,6 +135,14 @@ class Auth {
       //check is user is blocked or not
       if (userData.blockStatus === "BLOCKED") {
         throw new Error("User is blocked");
+      }
+
+      if (!userData?.emailVerified) {
+        return res.status(401).json({
+          status: "Unverified",
+          message: "Email is not verified.Please verify.",
+          data: {},
+        });
       }
 
       // get JWT token
@@ -306,6 +353,85 @@ class Auth {
     }
   }
 
+  // verify email and phone
+  public async verifyEmail(
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<any> {
+    try {
+      const { email, otp } = req.body;
+
+      const userData = await UserModel.findOne({ email });
+
+      if (!userData) throw new Error("User not found. Please register first.");
+
+      // check if OTP is correct
+      if (userData.verificationInfo.OTP !== otp)
+        throw new Error("OTP is incorrect");
+
+      // check if OTP is expired
+      if (new Date(userData.verificationInfo.OTPExpiry) < new Date())
+        throw new Error("OTP is expired");
+
+      userData.emailVerified = true;
+
+      await userData.save();
+
+      // send response to client
+      res.status(200).json({
+        status: "SUCCESS",
+        message: "Email verified",
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+  // verify email and phone
+  public async sendVerificationEmail(
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<any> {
+    try {
+      const { email } = req.body;
+
+      const userData = await UserModel.findOne({ email });
+
+      if (!userData) throw new Error("User not found. Please register first.");
+
+      const OTP = createOTP(6); // generate 6 digit OTP
+
+      await UserModel.findByIdAndUpdate(userData._id, {
+        verificationInfo: {
+          OTP,
+          OTPExpiry: new Date(Date.now() + 1000 * 60 * 30), // 30 minutes
+        },
+      });
+
+      // send mail for email verification
+      new MailController().sendHtmlMail({
+        to: email,
+        subject: "Email verification",
+        templet: "normal",
+        html: `<h1>Email verification OTP</h1>
+        <p>
+          Please enter the OTP below to verify your email:
+          </p>
+          <h1>${OTP}</h1>
+          `,
+      });
+
+      // send response to client
+      res.status(200).json({
+        status: "SUCCESS",
+        message: "Email sent successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   // logout
   public async logout(
     req: AuthRequest,
@@ -392,7 +518,13 @@ class Auth {
   public validateForgotPasswordOtpSendFields = [
     body("email", "Email is required").isEmail().withMessage("Invalid mail id"),
   ];
-  // fields validation for gating access token
+  public verifyEmailValidation = [
+    body("email", "Email is required").isEmail().withMessage("Invalid mail id"),
+    body("OTP", "Old is required")
+      .isLength({ min: 6 })
+      .withMessage("OTP must be at least 6 digit long")
+      .toInt(),
+  ];
 
   // finds validators for password change request
   public validateForgotPasswordFields = [

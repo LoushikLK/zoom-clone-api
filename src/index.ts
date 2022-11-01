@@ -67,7 +67,7 @@ class App {
       // load all routes
       if (file.includes(".route.")) {
         import(path.join(__dirname + "/routes/" + file)).then((route) => {
-          this.express.use("/api", new route.default().router);
+          this.express.use("/api/vi", new route.default().router);
         });
       }
       // not found route

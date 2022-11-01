@@ -9,13 +9,25 @@ const userSchema = new Schema<UserType>(
       type: String,
       required: true,
     },
-    phoneNumber: Number,
+    phoneNumber: {
+      type: String,
+      required: [true, "Phone number is required."],
+      unique: true,
+    },
     photoUrl: String,
     photoPath: String,
     email: {
       type: String,
       unique: true,
-      required: true,
+      required: [true, "Email address is required."],
+    },
+    emailVerified: {
+      type: Boolean,
+      default: false,
+    },
+    phoneNumberVerified: {
+      type: Boolean,
+      default: false,
     },
     gender: {
       type: "String",

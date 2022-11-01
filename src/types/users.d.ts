@@ -3,10 +3,12 @@ import { Document } from "mongoose";
 export default interface UserType extends Document {
   displayName: string;
   email: string;
+  emailVerified: boolean;
   salt: string;
   password: string;
   lastLoginTime: string;
   phoneNumber: string;
+  phoneNumberVerified: boolean;
   photoUrl: string;
   photoPath: string;
   fcmTokens: {

@@ -16,6 +16,8 @@ class Auth extends AuthenticateMiddleware {
     this.forgotPasswordOtpSendRoute();
     this.forgotPasswordOtpVerifyAndChangePasswordRoute();
     this.logoutRoute();
+    this.sendVerificationEmail();
+    this.verifyEmail();
   }
 
   // create user
@@ -24,8 +26,25 @@ class Auth extends AuthenticateMiddleware {
     this.router.post(
       "/auth/user/create",
       this.authController.validateUserCreationFields,
-      this.isAuthenticated,
       this.authController.createUser
+    );
+  }
+  // send verification email
+
+  private sendVerificationEmail(): void {
+    this.router.post(
+      "/auth/send-email",
+      this.authController.validateResendEmailVerificationFields,
+      this.authController.sendVerificationEmail
+    );
+  }
+  // send verification email
+
+  private verifyEmail(): void {
+    this.router.post(
+      "/auth/send-email/verify",
+      this.authController.verifyEmailValidation,
+      this.authController.sendVerificationEmail
     );
   }
 
