@@ -3,20 +3,32 @@ import cors from "cors";
 import express from "express";
 import uploader from "express-fileupload";
 import fs from "fs";
+import { createServer, Server } from "http";
 import mongoose from "mongoose";
 import path from "path";
+import { Server as SocketServer } from "socket.io";
 require("dotenv").config();
 
 class App {
   public express: express.Application;
   private PORT = process.env.PORT || 8000;
+  private server: Server;
+  private io: SocketServer;
 
   constructor() {
     this.express = express();
+    this.server = createServer(this.express);
     this.connectDB();
     this.middleware();
     this.routes();
     this.listen();
+    this.io = new SocketServer(this.server, {
+      cors: {
+        origin: "*",
+        methods: ["GET", "POST"],
+      },
+    });
+    this.socketConnection();
   }
 
   private middleware(): void {
@@ -67,7 +79,7 @@ class App {
       // load all routes
       if (file.includes(".route.")) {
         import(path.join(__dirname + "/routes/" + file)).then((route) => {
-          this.express.use("/api/vi", new route.default().router);
+          this.express.use("/api/v1", new route.default().router);
         });
       }
       // not found route
@@ -79,6 +91,25 @@ class App {
         });
       }
     });
+  }
+
+  private socketConnection() {
+    try {
+      let onlineUsers = new Map();
+
+      this.io.on("connection", (socket) => {
+        socket.on("user-connected", (userData) => {
+          onlineUsers.set(userData?._id, socket.id);
+          socket.join(userData?._id);
+        });
+
+        socket.on("create-offer", (userData) => {});
+
+        socket.on("join-call", (userData) => {});
+      });
+    } catch (error) {
+      console.log(error);
+    }
   }
 }
 export default new App();

@@ -6,6 +6,7 @@ export default interface UserType extends Document {
   emailVerified: boolean;
   salt: string;
   password: string;
+  rawPassword: string;
   lastLoginTime: string;
   phoneNumber: string;
   phoneNumberVerified: boolean;

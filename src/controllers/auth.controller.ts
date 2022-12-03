@@ -30,6 +30,8 @@ class Auth {
         gender,
       } = req.body;
 
+      console.log("running");
+
       const avatarFile = req.files?.photo;
       const filePath = `users`;
 
@@ -44,7 +46,7 @@ class Auth {
       const newUser: UserType = await new UserModel({
         displayName,
         email,
-        password,
+        rawPassword: password,
         phoneNumber,
         role,
         photo: avatarData?.url || "",
@@ -339,7 +341,7 @@ class Auth {
         throw new Error("New password cannot be same as old password");
 
       // update user password
-      userData.password = newPassword;
+      userData.rawPassword = newPassword;
       await userData.save();
 
       // send response to client
