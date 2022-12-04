@@ -16,6 +16,7 @@ class RoomController {
 
       const roomCreated = await RoomModel.create({
         createBy: userId,
+        joinedUsers: [userId],
         roomType: roomType,
       });
 
@@ -47,10 +48,13 @@ class RoomController {
 
       //find and update room
 
-      const joinRoom = await RoomModel.findByIdAndUpdate(roomId, {
-        createBy: user,
-        $push: { joinedUsers: userId },
-      });
+      const joinRoom = await RoomModel.findOneAndUpdate(
+        { _id: roomId, joinedUsers: { $nin: [userId] } },
+        {
+          createBy: user,
+          $push: { joinedUsers: userId },
+        }
+      );
 
       if (!joinRoom) throw new BadRequest("Room join failed");
 
@@ -198,6 +202,34 @@ class RoomController {
       res.status(200).json({
         status: "SUCCESS",
         message: "Deleting room successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+  getRoomData = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      errorHelper(req);
+
+      const user = req?.currentUser?._id;
+
+      const { roomId } = req?.params;
+
+      //find and update room
+
+      const roomData = await RoomModel.findOne({
+        _id: roomId,
+        joinedUsers: { $elemMatch: user },
+      });
+
+      if (!roomData) throw new BadRequest("No data found");
+
+      res.status(200).json({
+        status: "SUCCESS",
+        message: "Room data found  successfully",
+        data: {
+          data: roomData,
+        },
       });
     } catch (error) {
       next(error);

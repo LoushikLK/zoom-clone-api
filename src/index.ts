@@ -100,12 +100,52 @@ class App {
       this.io.on("connection", (socket) => {
         socket.on("user-connected", (userData) => {
           onlineUsers.set(userData?._id, socket.id);
-          socket.join(userData?._id);
         });
 
-        socket.on("create-offer", (userData) => {});
+        socket.on("user-added-to-room", (data) => {
+          const userSocket = onlineUsers?.get(data?.userId);
+          if (userSocket) {
+            socket
+              .to(data?.roomId)
+              .emit("new-user-added", {
+                message: "New user joined",
+                userId: data?.userId,
+              });
+            socket
+              .to(userSocket)
+              .emit("room-joined", {
+                message: `You joined to the room ${data?.roomId}`,
+                roomId: data?.roomId,
+              });
+          }
+        });
 
-        socket.on("join-call", (userData) => {});
+        socket.on("join-new-room", (data) => {
+          socket.join(data?.roomId);
+          socket
+            .to(data?.roomId)
+            .emit("user-joined", {
+              userId: data?.userId,
+              peerData: data?.peerData,
+            });
+        });
+
+        socket.on("join-waiting-room", (data) => {
+          socket
+            .to(data?.roomId)
+            .emit("user-added-to-waiting", { userId: data?.userId });
+        });
+
+        socket.on("user-rejected", (data) => {
+          const userSocket = onlineUsers?.get(data?.userId);
+          socket.to(userSocket).emit("room-rejected", { roomId: data?.roomId });
+        });
+
+        socket.on("exchange-peer", (data) => {
+          socket
+            .to(data?.roomId)
+            .emit("peer-data", { peerData: data?.peerData });
+        });
       });
     } catch (error) {
       console.log(error);

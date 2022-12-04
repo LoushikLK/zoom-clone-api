@@ -56,6 +56,11 @@ class roomRoute extends AuthMiddleware {
       this.roomController.deleteRoomValidation,
       this.roomController.deleteRoom
     );
+    this.router.get(
+      "/room/:roomId",
+      this.isAuthenticated,
+      this.roomController.getRoomData
+    );
   }
 }
 
