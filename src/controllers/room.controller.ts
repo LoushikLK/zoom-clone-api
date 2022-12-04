@@ -24,6 +24,9 @@ class RoomController {
       res.status(200).json({
         status: "SUCCESS",
         message: "Room created successfully",
+        data: {
+          data: roomCreated,
+        },
       });
     } catch (error) {
       next(error);
@@ -73,10 +76,12 @@ class RoomController {
 
       //find and update room
 
-      const joinRoom = await RoomModel.findByIdAndUpdate(roomId, {
-        $push: { joinedUsers: user },
-        roomType: "PUBLIC",
-      });
+      const joinRoom = await RoomModel.findOneAndUpdate(
+        { _id: roomId, roomType: "PUBLIC" },
+        {
+          $push: { joinedUsers: user },
+        }
+      );
 
       if (!joinRoom) throw new BadRequest("Room join failed");
 
@@ -98,9 +103,12 @@ class RoomController {
 
       //find and update room
 
-      const waitRoom = await RoomModel.findByIdAndUpdate(roomId, {
-        $push: { waitingUsers: user },
-      });
+      const waitRoom = await RoomModel.findOneAndUpdate(
+        { _id: roomId, joinedUsers: { $nin: [user] } },
+        {
+          $push: { waitingUsers: user },
+        }
+      );
 
       if (!waitRoom) throw new BadRequest("Room join failed");
 

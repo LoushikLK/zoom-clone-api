@@ -44,7 +44,7 @@ class Auth extends AuthenticateMiddleware {
     this.router.post(
       "/auth/send-email/verify",
       this.authController.verifyEmailValidation,
-      this.authController.sendVerificationEmail
+      this.authController.verifyEmail
     );
   }
 
@@ -61,6 +61,7 @@ class Auth extends AuthenticateMiddleware {
   private changePasswordRoute(): void {
     this.router.post(
       "/auth/change-password",
+      this.isAuthenticated,
       this.authController.validateChangePasswordFields,
       this.authController.changePassword
     );

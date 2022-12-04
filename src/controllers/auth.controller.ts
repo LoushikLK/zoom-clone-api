@@ -30,8 +30,6 @@ class Auth {
         gender,
       } = req.body;
 
-      console.log("running");
-
       const avatarFile = req.files?.photo;
       const filePath = `users`;
 
@@ -87,8 +85,6 @@ class Auth {
             <p>
             Thanks, <br>
             ${process.env.WEBSITE_NAME}
-
-
             </p>
           </p>`,
       });
@@ -201,17 +197,22 @@ class Auth {
       });
 
       // send response to client
-      res.cookie("authorization", `Bearer ${ACCESS_TOKEN}`).json({
-        status: "SUCCESS",
-        message: "User logged in successfully",
-        ACCESS_TOKEN,
-        data: {
-          _id: userData._id,
-          displayName: userData.displayName,
-          email: userData.email,
-          role: userData.role,
-        },
-      });
+      res
+        .cookie("authorization", `Bearer ${ACCESS_TOKEN}`, {
+          httpOnly: true,
+          secure: false,
+        })
+        .json({
+          status: "SUCCESS",
+          message: "User logged in successfully",
+          ACCESS_TOKEN,
+          data: {
+            _id: userData._id,
+            displayName: userData.displayName,
+            email: userData.email,
+            role: userData.role,
+          },
+        });
     } catch (error) {
       // send error to client
       next(error);
@@ -242,7 +243,7 @@ class Auth {
         throw new Error("Password is incorrect");
 
       // update user password
-      userData.password = newPassword;
+      userData.rawPassword = newPassword;
       await userData.save();
 
       // send response to client
@@ -362,14 +363,14 @@ class Auth {
     next: NextFunction
   ): Promise<any> {
     try {
-      const { email, otp } = req.body;
+      const { email, OTP } = req.body;
 
       const userData = await UserModel.findOne({ email });
 
       if (!userData) throw new Error("User not found. Please register first.");
 
       // check if OTP is correct
-      if (userData.verificationInfo.OTP !== otp)
+      if (userData.verificationInfo.OTP !== OTP)
         throw new Error("OTP is incorrect");
 
       // check if OTP is expired
@@ -450,7 +451,7 @@ class Auth {
       if (!userData) throw new Error("User not found");
 
       // send response to client
-      res.status(200).json({
+      res.status(200).clearCookie("authorization").json({
         status: "SUCCESS",
         message: "Logged out successfully",
       });
@@ -531,7 +532,7 @@ class Auth {
   // finds validators for password change request
   public validateForgotPasswordFields = [
     body("email", "Email is required").isEmail().withMessage("Invalid mail id"),
-    body("OTP", "Old is required")
+    body("OTP", "OTP is required")
       .isLength({ min: 6 })
       .withMessage("OTP must be at least 6 digit long")
       .toInt(),
