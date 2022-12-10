@@ -201,7 +201,7 @@ class Auth {
       res
         .cookie("authorization", `Bearer ${ACCESS_TOKEN}`, {
           httpOnly: true,
-          secure: false,
+          secure: process.env.NODE_ENV === "production" ? true : false,
         })
         .json({
           status: "SUCCESS",
