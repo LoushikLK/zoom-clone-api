@@ -18,6 +18,7 @@ class Auth {
   ): Promise<any> {
     try {
       // validator error handler
+
       errorHelper(req);
       // get provided user data
       const {
@@ -462,12 +463,20 @@ class Auth {
 
   // finds validators for the user creation request
   public validateUserCreationFields = [
-    body("displayName", "display name is required")
+    body("displayName")
+      .not()
+      .isEmpty()
+      .withMessage("displayName is required")
       .isLength({ min: 3 })
       .withMessage("Display name must be at least 3 characters long")
       .isLength({ max: 20 })
       .withMessage("Display name must be at most 20 characters long"),
-    body("email", "Email is required").isEmail().withMessage("Invalid mail id"),
+    body("email")
+      .not()
+      .isEmpty()
+      .withMessage("email is required")
+      .isEmail()
+      .withMessage("Invalid mail id"),
     body("confirmPassword", "Confirm password is required")
       .custom((value, { req }) => {
         if (value !== req.body.password) {
