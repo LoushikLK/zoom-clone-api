@@ -20,15 +20,15 @@ class App {
     this.server = createServer(this.express);
     this.connectDB();
     this.middleware();
-    this.routes();
-    this.listen();
     this.io = new SocketServer(this.server, {
       cors: {
         origin: "*",
         methods: ["GET", "POST"],
       },
     });
+    this.routes();
     this.socketConnection();
+    this.listen();
   }
 
   private middleware(): void {
@@ -66,7 +66,7 @@ class App {
   }
 
   public listen(): void {
-    this.express.listen(this.PORT, () => {
+    this.server.listen(this.PORT, () => {
       console.log(`Server started on port ${this.PORT}`);
     });
   }
@@ -98,36 +98,30 @@ class App {
       let onlineUsers = new Map();
 
       this.io.on("connection", (socket) => {
-        socket.on("user-connected", (userData) => {
-          onlineUsers.set(userData?._id, socket.id);
+        socket.on("user-connected", (userId) => {
+          onlineUsers.set(userId, socket.id);
         });
 
         socket.on("user-added-to-room", (data) => {
           const userSocket = onlineUsers?.get(data?.userId);
           if (userSocket) {
-            socket
-              .to(data?.roomId)
-              .emit("new-user-added", {
-                message: "New user joined",
-                userId: data?.userId,
-              });
-            socket
-              .to(userSocket)
-              .emit("room-joined", {
-                message: `You joined to the room ${data?.roomId}`,
-                roomId: data?.roomId,
-              });
+            socket.to(data?.roomId).emit("new-user-added", {
+              message: "New user joined",
+              userId: data?.userId,
+            });
+            socket.to(userSocket).emit("room-joined", {
+              message: `You joined to the room ${data?.roomId}`,
+              roomId: data?.roomId,
+            });
           }
         });
 
         socket.on("join-new-room", (data) => {
           socket.join(data?.roomId);
-          socket
-            .to(data?.roomId)
-            .emit("user-joined", {
-              userId: data?.userId,
-              peerData: data?.peerData,
-            });
+          socket.to(data?.roomId).emit("user-joined", {
+            userId: data?.userId,
+            peerData: data?.peerData,
+          });
         });
 
         socket.on("join-waiting-room", (data) => {

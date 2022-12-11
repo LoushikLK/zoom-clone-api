@@ -32,6 +32,12 @@ class roomRoute extends AuthMiddleware {
       this.roomController.joinPublicRoomValidate,
       this.roomController.joinPublicRoom
     );
+    this.router.post(
+      "/join/:roomId",
+      this.isAuthenticated,
+      this.roomController.joinAllRoomValidation,
+      this.roomController.joinRoom
+    );
     this.router.put(
       "/room/private/wait/:roomId",
       this.isAuthenticated,

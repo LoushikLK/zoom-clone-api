@@ -198,22 +198,17 @@ class Auth {
       });
 
       // send response to client
-      res
-        .cookie("authorization", `Bearer ${ACCESS_TOKEN}`, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production" ? true : false,
-        })
-        .json({
-          status: "SUCCESS",
-          message: "User logged in successfully",
-          ACCESS_TOKEN,
-          data: {
-            _id: userData._id,
-            displayName: userData.displayName,
-            email: userData.email,
-            role: userData.role,
-          },
-        });
+      res.setHeader("authorization", `Bearer ${ACCESS_TOKEN}`).json({
+        status: "SUCCESS",
+        message: "User logged in successfully",
+        ACCESS_TOKEN,
+        data: {
+          _id: userData._id,
+          displayName: userData.displayName,
+          email: userData.email,
+          role: userData.role,
+        },
+      });
     } catch (error) {
       // send error to client
       next(error);
@@ -485,6 +480,12 @@ class Auth {
         return true;
       })
       .withMessage("Password confirmation does not match"),
+    body("phoneNumber")
+      .not()
+      .isEmpty()
+      .withMessage("phone number is required")
+      .isNumeric()
+      .withMessage("phone number must be a number"),
   ];
 
   // finds validators for the user login request

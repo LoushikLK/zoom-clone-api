@@ -1,6 +1,6 @@
 import { NextFunction, Response } from "express";
 import { body, param } from "express-validator";
-import { BadRequest } from "http-errors";
+import { BadRequest, NotFound } from "http-errors";
 import { errorHelper } from "../helpers/error.helper";
 import { RoomModel } from "../models/room.model";
 import { AuthRequest } from "../types/core";
@@ -66,6 +66,7 @@ class RoomController {
       next(error);
     }
   };
+
   joinPublicRoom = async (
     req: AuthRequest,
     res: Response,
@@ -119,6 +120,61 @@ class RoomController {
       res.status(200).json({
         status: "SUCCESS",
         message: "Waiting in room successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+  joinRoom = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      errorHelper(req);
+
+      let joined = false;
+      let waiting = false;
+
+      const user = req?.currentUser?._id;
+
+      const { roomId } = req?.params;
+
+      //find the room
+      const room = await RoomModel.findById(roomId);
+
+      if (!room) throw new NotFound("Room not found");
+
+      //check if already exist in the room
+
+      let exist = room?.joinedUsers?.find((item) => {
+        return String(item) === String(user);
+      });
+
+      if (!exist) {
+        //check if the the room is private or public
+
+        if (room?.roomType === "PRIVATE") {
+          room.waitingUsers.push(user as any);
+          joined = true;
+        } else if (room?.roomType === "PUBLIC") {
+          room.joinedUsers.push(user as any);
+          waiting = true;
+        } else {
+          throw new BadRequest("Room joined failed");
+        }
+      } else {
+        joined = true;
+      }
+
+      await room.save();
+
+      res.status(200).json({
+        status: "SUCCESS",
+        message: "Room joined successfully",
+        data: {
+          data: {
+            room,
+            joined,
+            waiting,
+          },
+        },
       });
     } catch (error) {
       next(error);
@@ -220,7 +276,7 @@ class RoomController {
       const roomData = await RoomModel.findOne({
         _id: roomId,
         joinedUsers: { $elemMatch: user },
-      });
+      }).populate("createdBy joinedUser");
 
       if (!roomData) throw new BadRequest("No data found");
 
@@ -262,6 +318,15 @@ class RoomController {
       .withMessage("User id is required")
       .isMongoId()
       .withMessage("Enter a valid  user id"),
+  ];
+
+  joinAllRoomValidation = [
+    param("roomId")
+      .not()
+      .isEmpty()
+      .withMessage("Room id is required")
+      .isMongoId()
+      .withMessage("Enter a valid id"),
   ];
 
   joinPublicRoomValidate = [
