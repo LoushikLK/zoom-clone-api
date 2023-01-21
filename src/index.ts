@@ -11,7 +11,7 @@ require("dotenv").config();
 
 class App {
   public express: express.Application;
-  private PORT = process.env.PORT || 8000;
+  private PORT = process.env.PORT || 80;
   private server: Server;
   private io: SocketServer;
 
@@ -136,12 +136,10 @@ class App {
         });
 
         socket.on("exchange-peer", (data) => {
-          socket
-            .to(data?.roomId)
-            .emit("peer-data", {
-              peerData: data?.peerData,
-              candidate: data?.candidate,
-            });
+          socket.to(data?.roomId).emit("peer-data", {
+            peerData: data?.peerData,
+            candidate: data?.candidate,
+          });
         });
       });
     } catch (error) {
