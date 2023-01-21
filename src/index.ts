@@ -116,14 +116,6 @@ class App {
           }
         });
 
-        socket.on("join-new-room", (data) => {
-          socket.join(data?.roomId);
-          socket.to(data?.roomId).emit("user-joined", {
-            userId: data?.userId,
-            peerData: data?.peerData,
-          });
-        });
-
         socket.on("join-waiting-room", (data) => {
           socket
             .to(data?.roomId)
@@ -134,11 +126,22 @@ class App {
           const userSocket = onlineUsers?.get(data?.userId);
           socket.to(userSocket).emit("room-rejected", { roomId: data?.roomId });
         });
+        socket.on("join-new-room", (data) => {
+          socket.join(data?.roomId);
+          socket.to(data?.roomId).emit("user-joined", {
+            userId: data?.userId,
+            peerData: data?.peerData,
+            candidate: data?.candidate,
+          });
+        });
 
         socket.on("exchange-peer", (data) => {
           socket
             .to(data?.roomId)
-            .emit("peer-data", { peerData: data?.peerData });
+            .emit("peer-data", {
+              peerData: data?.peerData,
+              candidate: data?.candidate,
+            });
         });
       });
     } catch (error) {

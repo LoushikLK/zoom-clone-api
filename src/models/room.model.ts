@@ -1,4 +1,4 @@
-import { model, Model, Schema } from "mongoose";
+import { Model, Schema, model } from "mongoose";
 import RoomType from "../types/room";
 
 const roomSchema = new Schema<RoomType, Model<RoomType>>(
@@ -6,12 +6,12 @@ const roomSchema = new Schema<RoomType, Model<RoomType>>(
     createBy: {
       type: Schema.Types.ObjectId,
       required: true,
-      ref: "Users",
+      ref: "User",
     },
     joinedUsers: [
       {
         type: Schema.Types.ObjectId,
-        ref: "Users",
+        ref: "User",
       },
     ],
     roomType: {
@@ -23,7 +23,7 @@ const roomSchema = new Schema<RoomType, Model<RoomType>>(
     waitingUsers: [
       {
         type: Schema.Types.ObjectId,
-        ref: "Users",
+        ref: "User",
       },
     ],
   },

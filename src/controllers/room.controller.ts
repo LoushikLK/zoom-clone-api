@@ -275,8 +275,8 @@ class RoomController {
 
       const roomData = await RoomModel.findOne({
         _id: roomId,
-        joinedUsers: { $elemMatch: user },
-      }).populate("createdBy joinedUser");
+        joinedUsers: { $elemMatch: { $eq: user } },
+      }).populate("createBy joinedUsers");
 
       if (!roomData) throw new BadRequest("No data found");
 
