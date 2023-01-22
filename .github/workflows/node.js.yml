@@ -29,4 +29,4 @@ jobs:
           touch .env
           echo ${{secrets.ENV_FILE}} > .env
           echo env added
-      - run: sudo pm2 restart build/index.js
+      - run: pm2 restart build/index.js
