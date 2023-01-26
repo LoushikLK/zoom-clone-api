@@ -126,6 +126,7 @@ class App {
           const userSocket = onlineUsers?.get(data?.userId);
           socket.to(userSocket).emit("room-rejected", { roomId: data?.roomId });
         });
+
         socket.on("join-new-room", (data) => {
           socket.join(data?.roomId);
           socket.to(data?.roomId).emit("user-joined", {
