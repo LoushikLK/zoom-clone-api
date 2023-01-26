@@ -25,23 +25,24 @@ jobs:
           cache: "npm"
       - run: npm ci
       - run: npm run build --if-present
-      - run: cat > .env  ${{secrets.ENV_FILE}}
+      - run: |
+          touch .env
+          echo MONGODB_URI=${MONGODB_URI} >> .env
+          echo JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET} >> .env
+          echo CLOUDINARY_NAME=${CLOUDINARY_NAME} >> .env
+          echo CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} >> .env
+          echo CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET} >> .env
+          echo APP_NAME=${APP_NAME} >> .env
+          echo EMAIL=${EMAIL} >> .env
+          echo EMAIL_SERVICE_PASSWORD=${EMAIL_SERVICE_PASSWORD} >> .env
+          cat .env
+      - env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET }}
+          CLOUDINARY_NAME: ${{ secrets.CLOUDINARY_NAME }}
+          CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
+          APP_NAME: ${{ secrets.APP_NAME }}
+          EMAIL: ${{ secrets.EMAIL }}
+          EMAIL_SERVICE_PASSWORD: ${{ secrets.EMAIL_SERVICE_PASSWORD }}
       - run: pm2 restart build/index.js
-  create-envfile:
-    runs-on: self-hosted
-
-    steps:
-      - name: Make envfile
-        uses: SpicyPizza/create-envfile@v1.3
-        with:
-          envkey_DEBUG: false
-          envkey_MONGODB_URI: ${{secrets.MONGODB_URI}}
-          envkey_JWT_ACCESS_SECRET: ${{secrets.JWT_ACCESS_SECRET}}
-          envkey_CLOUDINARY_NAME: ${{secrets.CLOUDINARY_NAME}}
-          envkey_CLOUDINARY_API_KEY: ${{secrets.CLOUDINARY_API_KEY}}
-          envkey_CLOUDINARY_API_SECRET: ${{secrets.CLOUDINARY_API_SECRET}}
-          envkey_APP_NAME: ${{secrets.APP_NAME}}
-          envkey_EMAIL: ${{secrets.EMAIL}}
-          envkey_EMAIL_SERVICE_PASSWORD: ${{secrets.EMAIL_SERVICE_PASSWORD}}
-          file_name: .env
-          fail_on_empty: true
