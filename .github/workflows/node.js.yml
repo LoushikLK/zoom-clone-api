@@ -25,17 +25,7 @@ jobs:
           cache: "npm"
       - run: npm ci
       - run: npm run build --if-present
-      - run: |
-          touch .env
-          echo MONGODB_URI=${MONGODB_URI} >> .env
-          echo JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET} >> .env
-          echo CLOUDINARY_NAME=${CLOUDINARY_NAME} >> .env
-          echo CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY} >> .env
-          echo CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET} >> .env
-          echo APP_NAME=${APP_NAME} >> .env
-          echo EMAIL=${EMAIL} >> .env
-          echo EMAIL_SERVICE_PASSWORD=${EMAIL_SERVICE_PASSWORD} >> .env
-          cat .env
+      - run: echo adding secret
       - env:
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
           JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET }}
