@@ -11,7 +11,7 @@ require("dotenv").config();
 
 class App {
   public express: express.Application;
-  private PORT = process.env.PORT || 80;
+  private PORT = process.env.PORT || 8000;
   private server: Server;
   private io: SocketServer;
 
