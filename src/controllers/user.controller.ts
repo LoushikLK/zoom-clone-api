@@ -42,7 +42,7 @@ class UserController extends MediaLogic {
 
       const userId = req.currentUser?._id;
 
-      const { displayName, gender } = req.body;
+      const { displayName, gender, dateOfBirth, phoneNumber } = req.body;
 
       const avatarFile = req.files?.photo;
       const filePath = `users`;
@@ -59,6 +59,8 @@ class UserController extends MediaLogic {
           gender,
           photoUrl: userImage?.url,
           photoPath: userImage?.path,
+          dateOfBirth,
+          phoneNumber,
         },
         { runValidators: true }
       );
@@ -92,7 +94,7 @@ class UserController extends MediaLogic {
     body("gender")
       .optional()
       .custom((value, { req }) => {
-        if (!["MALE", "FEMALE", "OTHER", "NONE"]?.includes("value")) {
+        if (!["MALE", "FEMALE", "OTHER", "NONE"]?.includes(value)) {
           return false;
         }
         return true;

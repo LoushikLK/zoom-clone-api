@@ -19,7 +19,7 @@ class userRoute extends AuthMiddleware {
       this.isAuthenticated,
       this.userController.getProfile
     );
-    this.router.get(
+    this.router.put(
       "/update-profile",
       this.isAuthenticated,
       this.userController.validateUserUpdate,
