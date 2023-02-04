@@ -10,7 +10,7 @@ import JWTToken from "../utils/jwt.utils";
 import MediaLogic from "../utils/media.utils";
 
 class Auth {
-  // create user by office
+  // create user
   public async createUser(
     req: AuthRequest,
     res: Response,
@@ -217,7 +217,7 @@ class Auth {
 
   // change password
   public async changePassword(
-    req: Request,
+    req: AuthRequest,
     res: Response,
     next: NextFunction
   ): Promise<any> {
@@ -226,10 +226,10 @@ class Auth {
       errorHelper(req);
 
       // get provided user data
-      const { email, oldPassword, newPassword } = req.body;
+      const { oldPassword, newPassword } = req.body;
 
       // find user by email
-      const userData = await UserModel.findOne({ email });
+      const userData = await UserModel.findById(req?.currentUser?._id);
 
       // check if user exists
       if (!userData) throw new Error("User not found");
@@ -503,7 +503,6 @@ class Auth {
 
   // finds validators for password change request
   public validateChangePasswordFields = [
-    body("email", "Email is required").isEmail().withMessage("Invalid mail id"),
     body("oldPassword", "Old password is required")
       .isLength({ min: 6 })
       .withMessage("Old password must be at least 6 characters long"),

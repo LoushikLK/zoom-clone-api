@@ -1,6 +1,6 @@
 import { NextFunction, Response } from "express";
 import { body, param } from "express-validator";
-import { BadRequest, NotFound } from "http-errors";
+import { BadRequest } from "http-errors";
 import { errorHelper } from "../helpers/error.helper";
 import { RoomModel } from "../models/room.model";
 import { AuthRequest } from "../types/core";
@@ -12,11 +12,11 @@ class RoomController {
 
       const userId = req.currentUser?._id;
 
-      const { roomType } = req?.body;
+      const { roomType, title } = req?.body;
 
       const roomCreated = await RoomModel.create({
         createBy: userId,
-        joinedUsers: [userId],
+        title,
         roomType: roomType,
       });
 
@@ -129,50 +129,50 @@ class RoomController {
     try {
       errorHelper(req);
 
-      let joined = false;
-      let waiting = false;
+      // let joined = false;
+      // let waiting = false;
 
-      const user = req?.currentUser?._id;
+      // const user = req?.currentUser?._id;
 
-      const { roomId } = req?.params;
+      // const { roomId } = req?.params;
 
-      //find the room
-      const room = await RoomModel.findById(roomId);
+      // //find the room
+      // const room = await RoomModel.findById(roomId);
 
-      if (!room) throw new NotFound("Room not found");
+      // if (!room) throw new NotFound("Room not found");
 
-      //check if already exist in the room
+      // //check if already exist in the room
 
-      let exist = room?.joinedUsers?.find((item) => {
-        return String(item) === String(user);
-      });
+      // let exist = room?.joinedUsers?.find((item) => {
+      //   return String(item) === String(user);
+      // });
 
-      if (!exist) {
-        //check if the the room is private or public
+      // if (!exist) {
+      //   //check if the the room is private or public
 
-        if (room?.roomType === "PRIVATE") {
-          room.waitingUsers.push(user as any);
-          joined = true;
-        } else if (room?.roomType === "PUBLIC") {
-          room.joinedUsers.push(user as any);
-          waiting = true;
-        } else {
-          throw new BadRequest("Room joined failed");
-        }
-      } else {
-        joined = true;
-      }
+      //   if (room?.roomType === "PRIVATE") {
+      //     room.waitingUsers.push(user as any);
+      //     joined = true;
+      //   } else if (room?.roomType === "PUBLIC") {
+      //     room.joinedUsers.push(user as any);
+      //     waiting = true;
+      //   } else {
+      //     throw new BadRequest("Room joined failed");
+      //   }
+      // } else {
+      //   joined = true;
+      // }
 
-      await room.save();
+      // await room.save();
 
       res.status(200).json({
         status: "SUCCESS",
         message: "Room joined successfully",
         data: {
           data: {
-            room,
-            joined,
-            waiting,
+            // room,
+            // joined,
+            // waiting,
           },
         },
       });
