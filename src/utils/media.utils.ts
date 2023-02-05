@@ -27,6 +27,7 @@ class MediaLogic {
           folder: `vChat/${folder || "common"}`,
         });
         fs.unlinkSync(file.tempFilePath);
+        fs.rm(`../../temp/${file.tempFilePath}`, { recursive: true }, () => {});
         resolve({
           url: result.secure_url,
           path: result.public_id,
@@ -51,6 +52,11 @@ class MediaLogic {
           });
           // delete temp file
           fs.unlinkSync(file.tempFilePath);
+          fs.rm(
+            `../../temp/${file.tempFilePath}`,
+            { recursive: true },
+            () => {}
+          );
 
           // push result to result array
           resultArray.push({
