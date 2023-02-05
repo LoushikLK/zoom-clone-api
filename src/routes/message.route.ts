@@ -20,6 +20,18 @@ class messageRoute extends AuthMiddleware {
       this.messageController.validateMessageCreate,
       this.messageController.sendMessage
     );
+    this.router.put(
+      "/update-message/:messageId",
+      this.isAuthenticated,
+      this.messageController.validateUpdateMessage,
+      this.messageController.updateMessage
+    );
+    this.router.get(
+      "/messages/:roomId",
+      this.isAuthenticated,
+      this.messageController.validateGetMessage,
+      this.messageController.getMessage
+    );
   }
 }
 
