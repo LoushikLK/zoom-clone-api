@@ -1,5 +1,5 @@
 import { NextFunction, Response } from "express";
-import { body, param } from "express-validator";
+import { body, param, query } from "express-validator";
 import { BadRequest } from "http-errors";
 import { errorHelper } from "../helpers/error.helper";
 import paginationHelper from "../helpers/pagination.helper";
@@ -27,6 +27,7 @@ class MessageController {
         replyMessage: ref ? true : false,
         sendBy: userId,
         roomId,
+        seen: [userId],
       });
 
       if (!messageData) throw new BadRequest("Message creation failed.");
@@ -49,9 +50,9 @@ class MessageController {
 
       const roomId = req.params?.roomId;
 
-      //get data from req.body
+      //get data from req.query
 
-      const { perPage, pageNo } = req.body;
+      const { perPage, pageNo } = req.query;
 
       const messageData = await paginationHelper({
         model: MessageModel,
@@ -60,6 +61,23 @@ class MessageController {
         },
         perPage,
         pageNo,
+        populate: [
+          {
+            path: "sendBy",
+            select: "_id displayName photoUrl",
+          },
+          {
+            path: "seen",
+            select: "_id displayName photoUrl",
+          },
+          {
+            path: "reacted",
+            populate: {
+              path: "user",
+              select: "_id displayName photoUrl",
+            },
+          },
+        ],
       });
 
       if (!messageData) throw new BadRequest("Message fetch failed.");
@@ -136,12 +154,12 @@ class MessageController {
       .withMessage("roomId is required")
       .isMongoId()
       .withMessage("enter a valid roomId"),
-    body("perPage")
+    query("perPage")
       .optional()
       .isNumeric()
       .withMessage("enter a valid perPage")
       .toInt(),
-    body("pageNo")
+    query("pageNo")
       .optional()
       .isNumeric()
       .withMessage("enter a valid pageNo")

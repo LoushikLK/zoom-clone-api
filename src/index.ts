@@ -142,6 +142,11 @@ class App {
             candidate: data?.candidate,
           });
         });
+        //handel messaging
+
+        socket.on("message-send", (data) => {
+          socket.to(data?.roomId).emit("message-received", data);
+        });
       });
     } catch (error) {
       console.log(error, "error");
