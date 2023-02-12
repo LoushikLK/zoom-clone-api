@@ -1,8 +1,9 @@
-import { Document } from "mongoose";
-import UserType from "./users";
+import { Document, ObjectId } from "mongoose";
 
 export default interface RoomType extends Document {
   title: string;
-  createBy: UserType;
+  createBy: ObjectId;
   roomType: "PRIVATE" | "PUBLIC";
+  joinedUsers: ObjectId[];
+  waitingUsers: ObjectId[];
 }

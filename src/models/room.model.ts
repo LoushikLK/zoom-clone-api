@@ -17,6 +17,20 @@ const roomSchema = new Schema<RoomType, Model<RoomType>>(
       enum: ["PRIVATE", "PUBLIC"],
       default: "PUBLIC",
     },
+    joinedUsers: [
+      {
+        type: Schema.Types.ObjectId,
+        required: true,
+        ref: "User",
+      },
+    ],
+    waitingUsers: [
+      {
+        type: Schema.Types.ObjectId,
+        required: true,
+        ref: "User",
+      },
+    ],
   },
   {
     timestamps: true,

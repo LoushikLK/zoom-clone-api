@@ -97,6 +97,8 @@ class App {
     try {
       let onlineUsers = new Map();
 
+      let allRoom = new Map();
+
       this.io.on("connection", (socket) => {
         socket.on("user-connected", (userId) => {
           onlineUsers.set(userId, socket.id);
@@ -104,6 +106,7 @@ class App {
 
         socket.on("user-added-to-room", (data) => {
           const userSocket = onlineUsers?.get(data?.userId);
+
           if (userSocket) {
             socket.to(data?.roomId).emit("new-user-added", {
               message: "New user joined",
@@ -126,21 +129,42 @@ class App {
           const userSocket = onlineUsers?.get(data?.userId);
           socket.to(userSocket).emit("room-rejected", { roomId: data?.roomId });
         });
+        socket.on("user-accepted", (data) => {
+          const userSocket = onlineUsers?.get(data?.userId);
+          socket.to(userSocket).emit("room-accepted", { roomId: data?.roomId });
+        });
 
         socket.on("join-new-room", (data) => {
           socket.join(data?.roomId);
           socket.to(data?.roomId).emit("user-joined", {
             userId: data?.userId,
-            peerData: data?.peerData,
-            candidate: data?.candidate,
+            signal: data?.signal,
           });
         });
 
-        socket.on("exchange-peer", (data) => {
-          socket.to(data?.roomId).emit("peer-data", {
-            peerData: data?.peerData,
-            candidate: data?.candidate,
+        socket.on("reverse-signal", (data) => {
+          //find the user from allUser
+
+          const userSocket = onlineUsers.get(data?.userId);
+
+          if (!userSocket) return;
+
+          socket.to(userSocket).emit("exchange-peer", {
+            signal: data?.signal,
+            userId: data?.userId,
           });
+          // //send message to userSocket
+          // socket.to(userSocket).emit("return-signal", {
+          //   signal: data?.signal,
+          //   userId: data?.userId,
+          // });
+        });
+
+        //room created in socket
+        socket.on("room-created", (data) => {
+          let room = allRoom.get(data?.roomId);
+          if (room) return;
+          allRoom.set(data?.roomId, [socket.id]);
         });
         //handel messaging
 

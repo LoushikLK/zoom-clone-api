@@ -1,6 +1,6 @@
 import { NextFunction, Response } from "express";
 import { body, param } from "express-validator";
-import { BadRequest } from "http-errors";
+import { BadRequest, NotFound } from "http-errors";
 import { errorHelper } from "../helpers/error.helper";
 import { RoomModel } from "../models/room.model";
 import { AuthRequest } from "../types/core";
@@ -18,6 +18,7 @@ class RoomController {
         createBy: userId,
         title,
         roomType: roomType,
+        joinedUsers: [userId],
       });
 
       if (!roomCreated) throw new BadRequest("Room creation failed");
@@ -33,7 +34,6 @@ class RoomController {
       next(error);
     }
   };
-
   joinPrivateRoom = async (
     req: AuthRequest,
     res: Response,
@@ -53,6 +53,9 @@ class RoomController {
         {
           createBy: user,
           $push: { joinedUsers: userId },
+          $pull: {
+            waitingUsers: userId,
+          },
         }
       );
 
@@ -66,12 +69,7 @@ class RoomController {
       next(error);
     }
   };
-
-  joinPublicRoom = async (
-    req: AuthRequest,
-    res: Response,
-    next: NextFunction
-  ) => {
+  joinARoom = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       errorHelper(req);
 
@@ -79,100 +77,52 @@ class RoomController {
 
       const { roomId } = req?.params;
 
-      //find and update room
+      //find room
 
-      const joinRoom = await RoomModel.findOneAndUpdate(
-        { _id: roomId, roomType: "PUBLIC" },
-        {
-          $push: { joinedUsers: user },
+      const room = await RoomModel.findById(roomId);
+
+      if (!room) throw new NotFound("Room does not exist");
+      //check if already exist in room
+
+      const alreadyExist = room?.joinedUsers?.includes(user as any);
+
+      if (
+        room?.roomType === "PRIVATE" &&
+        room?.createBy !== (user as any) &&
+        !alreadyExist
+      ) {
+        if (
+          !room?.waitingUsers?.includes(user as any) &&
+          !room?.joinedUsers?.includes(user as any)
+        ) {
+          room.waitingUsers.push(user as any);
         }
-      );
-
-      if (!joinRoom) throw new BadRequest("Room join failed");
-
-      res.status(200).json({
-        status: "SUCCESS",
-        message: "Room joined successfully",
-      });
-    } catch (error) {
-      next(error);
-    }
-  };
-  waitingRoom = async (req: AuthRequest, res: Response, next: NextFunction) => {
-    try {
-      errorHelper(req);
-
-      const user = req?.currentUser?._id;
-
-      const { roomId } = req?.params;
+      } else {
+        if (!room?.joinedUsers?.includes(user as any) && !alreadyExist) {
+          room.joinedUsers.push(user as any);
+        }
+      }
 
       //find and update room
-
-      const waitRoom = await RoomModel.findOneAndUpdate(
-        { _id: roomId, joinedUsers: { $nin: [user] } },
-        {
-          $push: { waitingUsers: user },
-        }
-      );
-
-      if (!waitRoom) throw new BadRequest("Room join failed");
+      await room.save();
 
       res.status(200).json({
         status: "SUCCESS",
-        message: "Waiting in room successfully",
-      });
-    } catch (error) {
-      next(error);
-    }
-  };
-  joinRoom = async (req: AuthRequest, res: Response, next: NextFunction) => {
-    try {
-      errorHelper(req);
-
-      // let joined = false;
-      // let waiting = false;
-
-      // const user = req?.currentUser?._id;
-
-      // const { roomId } = req?.params;
-
-      // //find the room
-      // const room = await RoomModel.findById(roomId);
-
-      // if (!room) throw new NotFound("Room not found");
-
-      // //check if already exist in the room
-
-      // let exist = room?.joinedUsers?.find((item) => {
-      //   return String(item) === String(user);
-      // });
-
-      // if (!exist) {
-      //   //check if the the room is private or public
-
-      //   if (room?.roomType === "PRIVATE") {
-      //     room.waitingUsers.push(user as any);
-      //     joined = true;
-      //   } else if (room?.roomType === "PUBLIC") {
-      //     room.joinedUsers.push(user as any);
-      //     waiting = true;
-      //   } else {
-      //     throw new BadRequest("Room joined failed");
-      //   }
-      // } else {
-      //   joined = true;
-      // }
-
-      // await room.save();
-
-      res.status(200).json({
-        status: "SUCCESS",
-        message: "Room joined successfully",
+        message: ` ${
+          room?.roomType === "PRIVATE"
+            ? String(room?.createBy) === user
+              ? "Joined room successfully"
+              : "Join request sent successfully"
+            : "Joined room successfully"
+        } `,
         data: {
           data: {
-            // room,
-            // joined,
-            // waiting,
+            joined:
+              room?.roomType === "PRIVATE"
+                ? String(room?.createBy) === user
+                  ? true
+                  : alreadyExist
+                : true,
           },
         },
       });
@@ -190,8 +140,43 @@ class RoomController {
 
       //find and update room
 
+      const waitRoom = await RoomModel.findOneAndUpdate(
+        {
+          _id: roomId,
+          createdBy: user,
+        },
+        {
+          $pull: {
+            joinedUsers: { $elemMatch: userId },
+          },
+        }
+      );
+
+      if (!waitRoom) throw new BadRequest("Remove from room failed");
+
+      res.status(200).json({
+        status: "SUCCESS",
+        message: "Remove from room successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+  removeFromRoom = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      errorHelper(req);
+
+      const user = req?.currentUser?._id;
+
+      const { roomId, userId } = req?.params;
+
+      //find and update room
+
       const waitRoom = await RoomModel.findByIdAndUpdate(roomId, {
-        createdBy: user,
         $pull: {
           joinedUsers: { $elemMatch: userId },
         },
@@ -221,12 +206,17 @@ class RoomController {
 
       //find and update room
 
-      const waitRoom = await RoomModel.findByIdAndUpdate(roomId, {
-        createdBy: user,
-        $pull: {
-          waitingUsers: { $elemMatch: userId },
+      const waitRoom = await RoomModel.findOneAndUpdate(
+        {
+          _id: roomId,
+          createdBy: user,
         },
-      });
+        {
+          $pull: {
+            waitingUsers: { $elemMatch: userId },
+          },
+        }
+      );
 
       if (!waitRoom) throw new BadRequest("Request reject failed");
 
@@ -276,7 +266,22 @@ class RoomController {
       const roomData = await RoomModel.findOne({
         _id: roomId,
         joinedUsers: { $elemMatch: { $eq: user } },
-      }).populate("createBy joinedUsers");
+      })
+        .select("-__v -updatedAt")
+        .populate([
+          {
+            path: "createBy",
+            select: "_id displayName email photoUrl ",
+          },
+          {
+            path: "joinedUsers",
+            select: "_id displayName email photoUrl ",
+          },
+          {
+            path: "waitingUsers",
+            select: "_id displayName email photoUrl ",
+          },
+        ]);
 
       if (!roomData) throw new BadRequest("No data found");
 
