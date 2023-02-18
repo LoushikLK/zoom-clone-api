@@ -134,30 +134,45 @@ class App {
           socket.to(userSocket).emit("room-accepted", { roomId: data?.roomId });
         });
 
-        socket.on("join-new-room", (data) => {
+        socket.on("new-room-joined", (data) => {
+          console.log("new-room-joined");
           socket.join(data?.roomId);
-          socket.to(data?.roomId).emit("user-joined", {
-            userId: data?.userId,
+          //get room Users
+          const roomUsers = allRoom.get(data?.roomId);
+
+          if (!roomUsers) {
+            allRoom.set(data?.roomId, [data?.userId]);
+          } else {
+            allRoom.set(
+              data?.roomId,
+              Array.from(new Set([...roomUsers, data?.userId]))
+            );
+          }
+
+          this.io.to(socket.id).emit("all-users", {
+            users: roomUsers?.filter((item: string) => item !== data?.userId),
+          });
+        });
+
+        socket.on("new-user-joined", (data) => {
+          let socketUser = onlineUsers.get(data?.userId);
+
+          this.io.to(socketUser).emit("user-joined", {
+            userId: data?.byUser,
             signal: data?.signal,
           });
         });
 
-        socket.on("reverse-signal", (data) => {
+        socket.on("other-user-signal", (data) => {
           //find the user from allUser
-
           const userSocket = onlineUsers.get(data?.userId);
 
           if (!userSocket) return;
 
           socket.to(userSocket).emit("exchange-peer", {
             signal: data?.signal,
-            userId: data?.userId,
+            userId: data?.byUser,
           });
-          // //send message to userSocket
-          // socket.to(userSocket).emit("return-signal", {
-          //   signal: data?.signal,
-          //   userId: data?.userId,
-          // });
         });
 
         //room created in socket
@@ -170,6 +185,10 @@ class App {
 
         socket.on("message-send", (data) => {
           socket.to(data?.roomId).emit("message-received", data);
+        });
+
+        socket.on("disconnect", (id) => {
+          console.log(Array.from(socket.rooms));
         });
       });
     } catch (error) {
