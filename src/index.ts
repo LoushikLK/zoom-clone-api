@@ -135,7 +135,8 @@ class App {
         });
 
         socket.on("new-room-joined", (data) => {
-          console.log("new-room-joined");
+          console.log("user joined");
+
           socket.join(data?.roomId);
           //get room Users
           const roomUsers = allRoom.get(data?.roomId);
@@ -188,7 +189,28 @@ class App {
         });
 
         socket.on("disconnect", (id) => {
-          console.log(Array.from(socket.rooms));
+          //find user
+          let user = [...onlineUsers.entries()]
+            .filter(({ 1: v }) => v === socket.id)
+            .map(([k]) => k)[0];
+
+          if (user) {
+            let data = [...allRoom.entries()]
+              .filter((item) => {
+                return item.flat().includes(user);
+              })
+              .flat()[0];
+
+            if (data) {
+              let room = allRoom.get(data.roomId);
+              if (room) {
+                allRoom.set(
+                  data,
+                  room.filter((item: string) => item !== user)
+                );
+              }
+            }
+          }
         });
       });
     } catch (error) {
