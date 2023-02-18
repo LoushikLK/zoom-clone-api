@@ -199,31 +199,6 @@ class App {
         socket.on("message-send", (data) => {
           socket.to(data?.roomId).emit("message-received", data);
         });
-
-        socket.on("disconnect", (id) => {
-          //find user
-          let user = [...onlineUsers.entries()]
-            .filter(({ 1: v }) => v === socket.id)
-            .map(([k]) => k)[0];
-
-          if (user) {
-            let data = [...allRoom.entries()]
-              .filter((item) => {
-                return item.flat().includes(user);
-              })
-              .flat()[0];
-
-            if (data) {
-              let room = allRoom.get(data.roomId);
-              if (room) {
-                allRoom.set(
-                  data,
-                  room.filter((item: string) => item !== user)
-                );
-              }
-            }
-          }
-        });
       });
     } catch (error) {
       console.log(error, "error");
