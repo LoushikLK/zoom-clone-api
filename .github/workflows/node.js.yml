@@ -34,6 +34,7 @@ jobs:
           echo EMAIL=$EMAIL >> .env
           echo EMAIL_SERVICE_PASSWORD=$EMAIL_SERVICE_PASSWORD >> .env
           echo JWT_ACCESS_SECRET=$JWT_ACCESS_SECRET >> .env
+          echo PORT=$PORT >> .env
           cat .env
         env:
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
@@ -44,6 +45,7 @@ jobs:
           EMAIL: ${{ secrets.EMAIL }}
           EMAIL_SERVICE_PASSWORD: ${{ secrets.EMAIL_SERVICE_PASSWORD }}
           JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET }}
+          PORT: ${{ secrets.PORT }}
 
       - run: |
           pm2 stop 0
