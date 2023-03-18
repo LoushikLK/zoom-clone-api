@@ -138,21 +138,33 @@ class App {
           console.log("user joined");
 
           socket.join(data?.roomId);
-          //get room Users
-          const roomUsers = allRoom.get(data?.roomId);
 
-          if (!roomUsers) {
-            allRoom.set(data?.roomId, [data?.userId]);
-          } else {
-            allRoom.set(
-              data?.roomId,
-              Array.from(new Set([...roomUsers, data?.userId]))
-            );
+          socket.to(data?.roomId).emit("user-joined", { userId: data?.userId });
+        });
+
+        socket.on("send-signal-to-user", (data) => {
+          //find user
+
+          let user = onlineUsers.get(data?.userId);
+
+          if (user) {
+            this.io.to(user).emit("incoming-signal", {
+              signal: data?.signal,
+              userId: data?.byUser,
+            });
           }
+        });
 
-          this.io.to(socket.id).emit("all-users", {
-            users: roomUsers?.filter((item: string) => item !== data?.userId),
-          });
+        socket.on("exchange-signal", (data) => {
+          //find user
+          let user = onlineUsers.get(data?.userId);
+
+          if (user) {
+            this.io.to(user).emit("reverse-signal", {
+              signal: data?.signal,
+              userId: data?.byUser,
+            });
+          }
         });
 
         socket.on("new-user-joined", (data) => {
@@ -186,31 +198,6 @@ class App {
 
         socket.on("message-send", (data) => {
           socket.to(data?.roomId).emit("message-received", data);
-        });
-
-        socket.on("disconnect", (id) => {
-          //find user
-          let user = [...onlineUsers.entries()]
-            .filter(({ 1: v }) => v === socket.id)
-            .map(([k]) => k)[0];
-
-          if (user) {
-            let data = [...allRoom.entries()]
-              .filter((item) => {
-                return item.flat().includes(user);
-              })
-              .flat()[0];
-
-            if (data) {
-              let room = allRoom.get(data.roomId);
-              if (room) {
-                allRoom.set(
-                  data,
-                  room.filter((item: string) => item !== user)
-                );
-              }
-            }
-          }
         });
       });
     } catch (error) {
