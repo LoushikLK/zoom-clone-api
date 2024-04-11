@@ -62,6 +62,11 @@ class roomRoute extends AuthMiddleware {
       this.isAuthenticated,
       this.roomController.getRoomData
     );
+    this.router.post(
+      "/room/:roomId/token",
+      this.isAuthenticated,
+      this.roomController.createAgoraToken
+    );
   }
 }
 

@@ -12,6 +12,7 @@ const userSchema = new Schema<UserType>(
     phoneNumber: {
       type: String,
       unique: true,
+      sparse: true,
     },
     photoUrl: String,
     photoPath: String,
@@ -57,6 +58,7 @@ const userSchema = new Schema<UserType>(
       OTP: Number,
       OTPExpiry: Date,
     },
+    vId: String,
   },
   { timestamps: true }
 );
@@ -70,6 +72,15 @@ userSchema
   .get(function () {
     return this.password;
   });
+
+userSchema.pre("save", async function (next) {
+  try {
+    this.vId = new Date().getTime().toString().slice(2);
+    next();
+  } catch (error) {
+    next();
+  }
+});
 
 userSchema.methods.authenticate = function (rawPassword: string) {
   return this.encryptPassword(rawPassword) === this.password;

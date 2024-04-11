@@ -1,6 +1,7 @@
+import { RtcRole, RtcTokenBuilder } from "agora-token";
 import { NextFunction, Response } from "express";
 import { body, param } from "express-validator";
-import { BadRequest, NotFound } from "http-errors";
+import { BadRequest, InternalServerError, NotFound } from "http-errors";
 import { errorHelper } from "../helpers/error.helper";
 import { RoomModel } from "../models/room.model";
 import { AuthRequest } from "../types/core";
@@ -293,6 +294,55 @@ class RoomController {
         },
       });
     } catch (error) {
+      next(error);
+    }
+  };
+  createAgoraToken = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      //validate field
+      errorHelper(req);
+
+      let {
+        channelName,
+        uid,
+        role = RtcRole.SUBSCRIBER,
+        expireTime = 7200,
+      } = req.body;
+
+      const AgoraAppId = process.env.AGORA_APP_ID || "";
+
+      const AgoraAppCertificate = process.env.AGORA_APP_CERT || "";
+
+      if (role === "publisher") {
+        role = RtcRole.PUBLISHER;
+      }
+
+      const currentTime = Math.floor(Date.now() / 1000);
+      const privilegeExpiredTs = currentTime + expireTime;
+      const token = RtcTokenBuilder.buildTokenWithUid(
+        AgoraAppId,
+        AgoraAppCertificate,
+        channelName,
+        uid,
+        role,
+        expireTime,
+        privilegeExpiredTs
+      );
+      if (!token) throw new InternalServerError("token is not created.");
+
+      res.json({
+        status: "SUCCESS",
+        message: "Token created successfully",
+        data: {
+          data: { token },
+        },
+      });
+    } catch (error) {
+      //handle error
       next(error);
     }
   };
