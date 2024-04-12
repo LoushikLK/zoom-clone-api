@@ -11,6 +11,10 @@ const roomSchema = new Schema<RoomType, Model<RoomType>>(
       required: true,
       ref: "User",
     },
+    admin: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
     roomType: {
       type: String,
       required: true,

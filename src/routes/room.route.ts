@@ -21,6 +21,12 @@ class roomRoute extends AuthMiddleware {
       this.roomController.createRoom
     );
     this.router.put(
+      "/room/:roomId",
+      this.isAuthenticated,
+      this.roomController.joinPublicRoomValidate,
+      this.roomController.updateRoom
+    );
+    this.router.put(
       "/room/private/join/:roomId/:userId",
       this.isAuthenticated,
       this.roomController.joinRoomValidate,
@@ -40,10 +46,10 @@ class roomRoute extends AuthMiddleware {
       this.roomController.removeRoom
     );
     this.router.put(
-      "/room/remove/:roomId",
+      "/room/leave/:roomId",
       this.isAuthenticated,
       this.roomController.joinPublicRoomValidate,
-      this.roomController.removeFromRoom
+      this.roomController.leaveRoom
     );
     this.router.put(
       "/room/reject/:roomId/:userId",

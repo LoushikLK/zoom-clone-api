@@ -20,6 +20,7 @@ class RoomController {
         title,
         roomType: roomType,
         joinedUsers: [userId],
+        admin: userId,
       });
 
       if (!roomCreated) throw new BadRequest("Room creation failed");
@@ -144,7 +145,7 @@ class RoomController {
       const waitRoom = await RoomModel.findOneAndUpdate(
         {
           _id: roomId,
-          createdBy: user,
+          admin: user,
         },
         {
           $pull: {
@@ -163,31 +164,54 @@ class RoomController {
       next(error);
     }
   };
-  removeFromRoom = async (
-    req: AuthRequest,
-    res: Response,
-    next: NextFunction
-  ) => {
+  updateRoom = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       errorHelper(req);
 
-      const user = req?.currentUser?._id;
+      const { roomId } = req?.params;
 
-      const { roomId, userId } = req?.params;
+      const { admin, title, roomType } = req.body;
+
+      //find and update room
+
+      const waitRoom = await RoomModel.findOneAndUpdate(
+        { _id: roomId, admin: req?.currentUser?._id },
+        {
+          admin,
+          title,
+          roomType,
+        }
+      );
+
+      if (!waitRoom) throw new BadRequest("Update room failed");
+
+      res.status(200).json({
+        status: "SUCCESS",
+        message: "Room updated successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+  leaveRoom = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      errorHelper(req);
+
+      const { roomId } = req?.params;
 
       //find and update room
 
       const waitRoom = await RoomModel.findByIdAndUpdate(roomId, {
         $pull: {
-          joinedUsers: { $elemMatch: userId },
+          joinedUsers: { $elemMatch: req?.currentUser?._id },
         },
       });
 
-      if (!waitRoom) throw new BadRequest("Remove from room failed");
+      if (!waitRoom) throw new BadRequest("Leave room failed");
 
       res.status(200).json({
         status: "SUCCESS",
-        message: "Remove from room successfully",
+        message: "Room left successfully",
       });
     } catch (error) {
       next(error);
@@ -265,8 +289,30 @@ class RoomController {
       //find and update room
 
       const roomData = await RoomModel.findOne({
-        _id: roomId,
-        joinedUsers: { $elemMatch: { $eq: user } },
+        $and: [
+          {
+            _id: roomId,
+          },
+          {
+            $or: [
+              {
+                admin: user,
+              },
+              {
+                joinedUsers: { $elemMatch: { $eq: user } },
+              },
+              {
+                waitingUsers: { $elemMatch: { $eq: user } },
+              },
+              {
+                createBy: user,
+              },
+              {
+                roomType: "PUBLIC",
+              },
+            ],
+          },
+        ],
       })
         .select("-__v -updatedAt")
         .populate([
@@ -280,6 +326,10 @@ class RoomController {
           },
           {
             path: "waitingUsers",
+            select: "_id displayName email photoUrl ",
+          },
+          {
+            path: "admin",
             select: "_id displayName email photoUrl ",
           },
         ]);

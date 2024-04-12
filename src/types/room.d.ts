@@ -6,4 +6,5 @@ export default interface RoomType extends Document {
   roomType: "PRIVATE" | "PUBLIC";
   joinedUsers: ObjectId[];
   waitingUsers: ObjectId[];
+  admin: ObjectId;
 }
