@@ -103,6 +103,12 @@ class App {
         socket.on("user-connected", (userId) => {
           onlineUsers.set(userId, socket.id);
         });
+        socket.on("room-connected", (data) => {
+          socket.join(data?.roomId);
+        });
+        socket.on("room-updated", (data) => {
+          socket.to(data?.roomId).emit("revalidate-room", data);
+        });
 
         socket.on("user-added-to-room", (data) => {
           const userSocket = onlineUsers?.get(data?.userId);
@@ -135,57 +141,8 @@ class App {
         });
 
         socket.on("new-room-joined", (data) => {
-          console.log("user joined");
-
           socket.join(data?.roomId);
-
           socket.to(data?.roomId).emit("user-joined", { userId: data?.userId });
-        });
-
-        socket.on("send-signal-to-user", (data) => {
-          //find user
-
-          let user = onlineUsers.get(data?.userId);
-
-          if (user) {
-            this.io.to(user).emit("incoming-signal", {
-              signal: data?.signal,
-              userId: data?.byUser,
-            });
-          }
-        });
-
-        socket.on("exchange-signal", (data) => {
-          //find user
-          let user = onlineUsers.get(data?.userId);
-
-          if (user) {
-            this.io.to(user).emit("reverse-signal", {
-              signal: data?.signal,
-              userId: data?.byUser,
-            });
-          }
-        });
-
-        socket.on("new-user-joined", (data) => {
-          let socketUser = onlineUsers.get(data?.userId);
-
-          this.io.to(socketUser).emit("user-joined", {
-            userId: data?.byUser,
-            signal: data?.signal,
-          });
-        });
-
-        socket.on("other-user-signal", (data) => {
-          //find the user from allUser
-          const userSocket = onlineUsers.get(data?.userId);
-
-          if (!userSocket) return;
-
-          socket.to(userSocket).emit("exchange-peer", {
-            signal: data?.signal,
-            userId: data?.byUser,
-          });
         });
 
         //room created in socket
