@@ -51,8 +51,8 @@ class roomRoute extends AuthMiddleware {
       this.roomController.joinPublicRoomValidate,
       this.roomController.leaveRoom
     );
-    this.router.put(
-      "/room/reject/:roomId/:userId",
+    this.router.delete(
+      "/room/private/join/:roomId/:userId",
       this.isAuthenticated,
       this.roomController.rejectRoomValidation,
       this.roomController.rejectRequest

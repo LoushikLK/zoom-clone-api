@@ -51,9 +51,25 @@ class RoomController {
       //find and update room
 
       const joinRoom = await RoomModel.findOneAndUpdate(
-        { _id: roomId, joinedUsers: { $nin: [userId] } },
         {
-          createBy: user,
+          $and: [
+            {
+              _id: roomId,
+            },
+            {
+              $or: [
+                {
+                  admin: user,
+                },
+                {
+                  createBy: user,
+                },
+              ],
+            },
+            { joinedUsers: { $nin: [userId] } },
+          ],
+        },
+        {
           $push: { joinedUsers: userId },
           $pull: {
             waitingUsers: userId,
@@ -90,7 +106,8 @@ class RoomController {
 
       if (
         room?.roomType === "PRIVATE" &&
-        room?.createBy !== (user as any) &&
+        String(room?.createBy) !== user?.toString() &&
+        String(room?.admin) !== user?.toString() &&
         !alreadyExist
       ) {
         if (
@@ -149,7 +166,7 @@ class RoomController {
         },
         {
           $pull: {
-            joinedUsers: { $elemMatch: userId },
+            joinedUsers: userId,
           },
         }
       );
@@ -203,7 +220,7 @@ class RoomController {
 
       const waitRoom = await RoomModel.findByIdAndUpdate(roomId, {
         $pull: {
-          joinedUsers: { $elemMatch: req?.currentUser?._id },
+          joinedUsers: req?.currentUser?._id,
         },
       });
 
@@ -233,12 +250,25 @@ class RoomController {
 
       const waitRoom = await RoomModel.findOneAndUpdate(
         {
-          _id: roomId,
-          createdBy: user,
+          $and: [
+            {
+              _id: roomId,
+            },
+            {
+              $or: [
+                {
+                  admin: user,
+                },
+                {
+                  createBy: user,
+                },
+              ],
+            },
+          ],
         },
         {
           $pull: {
-            waitingUsers: { $elemMatch: userId },
+            waitingUsers: userId,
           },
         }
       );
@@ -264,8 +294,21 @@ class RoomController {
       //find and update room
 
       const waitRoom = await RoomModel.findOneAndDelete({
-        _id: roomId,
-        createBy: user,
+        $and: [
+          {
+            _id: roomId,
+          },
+          {
+            $or: [
+              {
+                admin: user,
+              },
+              {
+                createBy: user,
+              },
+            ],
+          },
+        ],
       });
 
       if (!waitRoom) throw new BadRequest("Room delete failed");
