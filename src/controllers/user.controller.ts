@@ -14,7 +14,7 @@ class UserController extends MediaLogic {
       const userId = req.currentUser?._id;
 
       const userData = await UserModel.findById(userId).select(
-        "displayName phoneNumber photoUrl email emailVerified phoneNumberVerified gender dateOfBirth role isOnline isLoggedIn blockStatus createdAt "
+        "displayName phoneNumber photoUrl email emailVerified phoneNumberVerified gender dateOfBirth role isOnline isLoggedIn blockStatus createdAt vId"
       );
 
       if (!userData) throw new BadRequest("User data not found");

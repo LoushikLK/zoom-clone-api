@@ -413,7 +413,6 @@ class RoomController {
       if (role === "publisher") {
         role = RtcRole.PUBLISHER;
       }
-
       const currentTime = Math.floor(Date.now() / 1000);
       const privilegeExpiredTs = currentTime + expireTime;
       const token = RtcTokenBuilder.buildTokenWithUid(
