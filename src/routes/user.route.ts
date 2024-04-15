@@ -19,6 +19,11 @@ class userRoute extends AuthMiddleware {
       this.isAuthenticated,
       this.userController.getProfile
     );
+    this.router.get(
+      "/user/:vid",
+      this.isAuthenticated,
+      this.userController.getUserDetails
+    );
     this.router.put(
       "/update-profile",
       this.isAuthenticated,

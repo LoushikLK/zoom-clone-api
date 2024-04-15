@@ -33,7 +33,7 @@ export default interface UserType extends Document {
     LONG: string;
     LAT: string;
   };
-  vId: string;
+  vId: number;
   encryptPassword(rawPassword: string): string;
   authenticate(rawPassword: string): boolean;
 }

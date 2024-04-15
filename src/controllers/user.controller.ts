@@ -30,6 +30,35 @@ class UserController extends MediaLogic {
       next(error);
     }
   };
+  getUserDetails = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      errorHelper(req);
+
+      const vId = req.params?.vid;
+
+      console.log({ vId });
+
+      const userData = await UserModel.findOne({ vId }).select(
+        "displayName phoneNumber photoUrl email  gender dateOfBirth role isOnline createdAt vId"
+      );
+
+      if (!userData) throw new BadRequest("User data not found");
+
+      res.status(200).json({
+        status: "SUCCESS",
+        message: "Data fetched successfully",
+        data: {
+          data: userData,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
   updateProfile = async (
     req: AuthRequest,
     res: Response,

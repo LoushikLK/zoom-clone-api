@@ -58,7 +58,7 @@ const userSchema = new Schema<UserType>(
       OTP: Number,
       OTPExpiry: Date,
     },
-    vId: String,
+    vId: Number,
   },
   { timestamps: true }
 );
@@ -75,7 +75,7 @@ userSchema
 
 userSchema.pre("save", async function (next) {
   try {
-    this.vId = new Date().getTime().toString().slice(2);
+    this.vId = parseInt(new Date().getTime().toString().slice(2));
     next();
   } catch (error) {
     next();
