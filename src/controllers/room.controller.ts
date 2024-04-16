@@ -390,6 +390,57 @@ class RoomController {
       next(error);
     }
   };
+  getRandomRoom = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      errorHelper(req);
+
+      const user = req?.currentUser?._id;
+
+      const { roomId } = req?.params;
+
+      //find and update room
+
+      const roomData = await RoomModel.findOneAndUpdate(
+        {
+          $and: [
+            {
+              joinedUsers: {
+                $size: 1,
+              },
+            },
+            {
+              roomType: "RANDOM",
+            },
+          ],
+        },
+        {
+          $push: {
+            joinedUsers: user,
+          },
+        },
+        {
+          upsert: true,
+          new: true,
+        }
+      );
+
+      if (!roomData) throw new BadRequest("No data found");
+
+      res.status(200).json({
+        status: "SUCCESS",
+        message: "Random room found successfully",
+        data: {
+          data: roomData,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
   createAgoraToken = async (
     req: AuthRequest,
     res: Response,

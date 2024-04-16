@@ -64,10 +64,16 @@ class roomRoute extends AuthMiddleware {
       this.roomController.deleteRoom
     );
     this.router.get(
+      "/room/random",
+      this.isAuthenticated,
+      this.roomController.getRandomRoom
+    );
+    this.router.get(
       "/room/:roomId",
       this.isAuthenticated,
       this.roomController.getRoomData
     );
+
     this.router.post(
       "/room/:roomId/token",
       this.isAuthenticated,

@@ -18,7 +18,7 @@ const roomSchema = new Schema<RoomType, Model<RoomType>>(
     roomType: {
       type: String,
       required: true,
-      enum: ["PRIVATE", "PUBLIC"],
+      enum: ["PRIVATE", "PUBLIC", "RANDOM"],
       default: "PUBLIC",
     },
     joinedUsers: [
